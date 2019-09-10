@@ -1,0 +1,97 @@
+// prototype for SPICE webservice
+
+syntax = "proto3";
+
+//option java_multiple_files = true;
+//option java_package = "io.grpc.examples.routeguide";
+//option java_outer_classname = "RouteGuideProto";
+//option objc_class_prefix = "RTG";
+
+package iExec;
+
+// Execute some code on a remove computer and keep possibility to interact on the fly.
+service InteractiveExecutor {
+
+	// setup a new run
+	rpc Setup(SetupRequest) returns (SetupResult) {}
+
+	// run the code interactively
+	rpc RunInteractively(stream ClientToServer) returns (stream ServerToClient) {}
+
+	// after the code has finished, query some results (without having to re-run it)
+	rpc GetOutput(OutputRequest) returns (OutputResult) {}
+}
+
+// request to server to setup a new run
+message SetupRequest {
+	string runId = 1;
+}
+
+// response from server about request to setup a new run
+message SetupResult {
+	string response = 1;
+}
+
+// message from client to server in interactive mode, e.g. "start computation", "here is your requested data", etc.
+message ClientToServer {
+	string correspondingRunId = 1;
+
+	enum MessageType {
+		RUN = 0;
+		PROVIDE_DATA = 1;
+		REQUEST_STATUS = 2;
+		CANCEL = 3;
+	}
+	MessageType msgType = 2;
+
+	// RUN
+	double t_start = 4;
+	double t_end = 5;
+
+	// PROVIDE_DATA
+	double data = 6;
+
+	// REQUEST_STATUS
+	// no data
+
+	// CANCEL
+	// no data
+}
+
+// message from server to client in interactive mode, e.g. "starting computation...", "give me the voltage at 4.7s", etc.
+message ServerToClient {
+	string correspondingRunId = 1;
+
+	enum MessageType {
+		ACK_RUN = 0;
+		REQUEST_DATA = 1;
+		PROVIDE_STATUS = 2;
+		ACK_CANCEL = 3;
+	}
+	MessageType msgType = 2;
+
+	// ACK_RUN
+	string ack_run = 3;
+
+	// REQUEST_DATA
+	double req_time = 4;
+
+	// PROVIDE_STATUS
+	enum RunStatus {
+		RUNNING = 0;
+		DONE = 1;
+	}
+	RunStatus status = 6;
+
+	// CANCEL
+	// no data
+}
+
+message OutputRequest {
+	string runId = 1;
+}
+
+message OutputResult {
+	repeated double result = 2;
+}
+
